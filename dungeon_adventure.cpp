@@ -11,6 +11,7 @@ private:
     string playerName;
     int playerHealth;
     bool playerHasKey;
+    bool playerHasCompass;
     int playerScore;
 
 public:
@@ -18,28 +19,37 @@ public:
         playerName = name;
         playerHealth = 73;
         playerHasKey = false;
+        playerHasCompass = false;
         playerScore = 0;
     }
 
     string getName() { return playerName; }
     int getHealth() { return playerHealth; }
     bool hasKeyItem() { return playerHasKey; }
+    bool hasCompassItem() { return playerHasCompass; }
     int getScore() { return playerScore; }
 
     void setHealth(int newHealth) { playerHealth = newHealth; }
     void heal(int amount) { playerHealth = playerHealth + amount; }
+    void takeDamage(int damage) { playerHealth = playerHealth - damage; }
     void addScore(int points) { playerScore = playerScore + points; }
     void pickUpKey() {
         playerHasKey = true;
         playerScore = playerScore + 1;
+    }
+    void pickUpCompass() {
+        playerHasCompass = true;
     }
 
     void displayStatus() {
         cout << "\n--- " << playerName << " ---" << endl;
         cout << "Salud: " << playerHealth << endl;
         cout << "Puntos: " << playerScore << endl;
-        if (playerHasKey) cout << "Objeto: [Llave]" << endl;
-        else cout << "Objeto: Ninguno" << endl;
+        cout << "Objetos: ";
+        if (playerHasKey) cout << "[Llave] ";
+        if (playerHasCompass) cout << "[Brujula] ";
+        if (!playerHasKey && !playerHasCompass) cout << "Ninguno";
+        cout << endl;
     }
 };
 
@@ -108,6 +118,7 @@ int main() {
     if (choice == 1) {
         cout << "\nEntras al Corredor Oscuro..." << endl;
 
+        // Dark Corridor
         cout << "\n=== " << corridor.getName() << " ===" << endl;
         cout << corridor.getDescription() << endl;
 
@@ -117,9 +128,46 @@ int main() {
             corridor.removeItem();
         }
 
-        cout << "\nEncuentras un rincon seguro para descansar..." << endl;
-        player.heal(1);
-        cout << "Te vendas las heridas. Salud +1." << endl;
+        // Switch case for corridor choices
+        cout << "\nVes tres caminos:" << endl;
+        cout << "  1. Puerta cerrada con candado" << endl;
+        cout << "  2. Objeto brillante en el suelo" << endl;
+        cout << "  3. Puerta abierta" << endl;
+
+        int corridorChoice;
+        cout << "\nElección: ";
+        cin >> corridorChoice;
+
+        switch (corridorChoice) {
+            case 1:
+                // Locked door - resting bonus
+                cout << "\nEncuentras una puerta cerrada con candado." << endl;
+                cout << "¿Abrirán las nuevas puertas de la cámara?" << endl;
+                cout << "Necesitas algo para abrirla..." << endl;
+                cout << "\nEncuentras un rincon seguro para descansar..." << endl;
+                player.heal(1);
+                cout << "Te vendas las heridas. Salud +1." << endl;
+                break;
+            case 2:
+                // Compass - no recovery, no damage
+                cout << "\nEncuentras una brujula rota en el suelo." << endl;
+                cout << "\n¿Qué debo hacer? ¿Debo seguir explorando" << endl;
+                cout << "o buscar la salida de estas cámaras?" << endl;
+                cout << "\nDecides dejar todo y buscar la salida..." << endl;
+                break;
+            case 3:
+                // Unlocked door - damage from cold
+                cout << "\nEntras por la puerta abierta." << endl;
+                cout << "El pasaje está helado. El frío te cala los huesos." << endl;
+                cout << "No hay lugar seguro para descansar." << endl;
+                player.takeDamage(5);
+                cout << "Salud -5 por el frío." << endl;
+                break;
+            default:
+                cout << "Opcion invalida." << endl;
+                break;
+        }
+
         player.displayStatus();
 
         cout << "\nEscuchas un ruido detras de ti..." << endl;
@@ -137,8 +185,9 @@ int main() {
     cout << "Puntos Finales: " << player.getScore() << endl;
     cout << "Salud Final: " << player.getHealth() << endl;
     cout << "Objetos: ";
-    if (player.hasKeyItem()) cout << "[Llave]";
-    else cout << "Ninguno";
+    if (player.hasKeyItem()) cout << "[Llave] ";
+    if (player.hasCompassItem()) cout << "[Brujula] ";
+    if (!player.hasKeyItem() && !player.hasCompassItem()) cout << "Ninguno";
     cout << endl;
 
     return 0;
