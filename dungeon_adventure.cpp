@@ -6,11 +6,41 @@ using std::cin;
 using std::endl;
 using std::string;
 
+class Direction {
+private:
+    char directionKey;
+    string directionName;
+
+public:
+    Direction(char key) {
+        directionKey = key;
+        if (key == 'W' || key == 'w') {
+            directionName = "Arriba";
+        }
+        else if (key == 'S' || key == 's') {
+            directionName = "Abajo";
+        }
+        else if (key == 'A' || key == 'a') {
+            directionName = "Izquierda";
+        }
+        else if (key == 'D' || key == 'd') {
+            directionName = "Derecha";
+        }
+        else {
+            directionName = "Invalida";
+        }
+    }
+
+    char getKey() { return directionKey; }
+    string getName() { return directionName; }
+    bool isValid() { return directionName != "Invalida"; }
+};
+
 class Player {
 private:
     string playerName;
     int playerHealth;
-    bool playerHasKey;
+    bool playerHasLockpick;
     bool playerHasCompass;
     int playerScore;
 
@@ -18,14 +48,14 @@ public:
     Player(string name) {
         playerName = name;
         playerHealth = 73;
-        playerHasKey = false;
+        playerHasLockpick = false;
         playerHasCompass = false;
         playerScore = 0;
     }
 
     string getName() { return playerName; }
     int getHealth() { return playerHealth; }
-    bool hasKeyItem() { return playerHasKey; }
+    bool hasLockpickItem() { return playerHasLockpick; }
     bool hasCompassItem() { return playerHasCompass; }
     int getScore() { return playerScore; }
 
@@ -33,8 +63,8 @@ public:
     void heal(int amount) { playerHealth = playerHealth + amount; }
     void takeDamage(int damage) { playerHealth = playerHealth - damage; }
     void addScore(int points) { playerScore = playerScore + points; }
-    void pickUpKey() {
-        playerHasKey = true;
+    void pickUpLockpick() {
+        playerHasLockpick = true;
         playerScore = playerScore + 1;
     }
     void pickUpCompass() {
@@ -46,9 +76,9 @@ public:
         cout << "Salud: " << playerHealth << endl;
         cout << "Puntos: " << playerScore << endl;
         cout << "Objetos: ";
-        if (playerHasKey) cout << "[Llave] ";
+        if (playerHasLockpick) cout << "[Ganzua] ";
         if (playerHasCompass) cout << "[Brujula] ";
-        if (!playerHasKey && !playerHasCompass) cout << "Ninguno";
+        if (!playerHasLockpick && !playerHasCompass) cout << "Ninguno";
         cout << endl;
     }
 };
@@ -82,8 +112,6 @@ int main() {
     Room entrance("Sala de Entrada", "Una habitacion oscura con dos pasajes.");
     Room corridor("Corredor Oscuro", "Un pasaje angosto. Escuchas goteo de agua.");
 
-    corridor.setItem("Llave Antigua");
-
     // Backstory
     cout << "\n========================================" << endl;
     cout << "  UNA PROFESORA DE GEOGRAFIA PERDIDA EN LAS MAZMORRAS" << endl;
@@ -108,64 +136,71 @@ int main() {
     cout << "\n=== " << entrance.getName() << " ===" << endl;
     cout << entrance.getDescription() << endl;
     cout << "\nVes:" << endl;
-    cout << "  1. Norte - Corredor Oscuro" << endl;
-    cout << "  2. Sur - Muro (bloqueado)" << endl;
+    cout << "  W - Arriba - Corredor Oscuro" << endl;
+    cout << "  S - Abajo - Muro (bloqueado)" << endl;
 
-    int choice;
+    char entranceChoice;
     cout << "\nElección: ";
-    cin >> choice;
+    cin >> entranceChoice;
 
-    if (choice == 1) {
+    Direction entranceDir(entranceChoice);
+
+    if (entranceDir.isValid() && entranceDir.getKey() == 'W' || entranceDir.getKey() == 'w') {
         cout << "\nEntras al Corredor Oscuro..." << endl;
 
         // Dark Corridor
         cout << "\n=== " << corridor.getName() << " ===" << endl;
         cout << corridor.getDescription() << endl;
 
-        if (corridor.hasItem()) {
-            cout << "\n¡Encontraste: " << corridor.getItemName() << "!" << endl;
-            player.pickUpKey();
-            corridor.removeItem();
-        }
+        // Switch case for corridor choices (WASD)
+        cout << "\nVes cuatro caminos:" << endl;
+        cout << "  W - Arriba" << endl;
+        cout << "  S - Abajo" << endl;
+        cout << "  D - Derecha" << endl;
+        cout << "  A - Izquierda" << endl;
 
-        // Switch case for corridor choices
-        cout << "\nVes tres caminos:" << endl;
-        cout << "  1. Puerta cerrada con candado" << endl;
-        cout << "  2. Objeto brillante en el suelo" << endl;
-        cout << "  3. Puerta abierta" << endl;
-
-        int corridorChoice;
+        char corridorChoice;
         cout << "\nElección: ";
         cin >> corridorChoice;
 
-        switch (corridorChoice) {
-            case 1:
-                // Locked door - resting bonus
-                cout << "\nEncuentras una puerta cerrada con candado." << endl;
-                cout << "¿Abrirán las nuevas puertas de la cámara?" << endl;
-                cout << "Necesitas algo para abrirla..." << endl;
-                cout << "\nEncuentras un rincon seguro para descansar..." << endl;
-                player.heal(1);
-                cout << "Te vendas las heridas. Salud +1." << endl;
-                break;
-            case 2:
-                // Compass - no recovery, no damage
-                cout << "\nEncuentras una brujula rota en el suelo." << endl;
-                cout << "\n¿Qué debo hacer? ¿Debo seguir explorando" << endl;
-                cout << "o buscar la salida de estas cámaras?" << endl;
-                cout << "\nDecides dejar todo y buscar la salida..." << endl;
-                break;
-            case 3:
-                // Unlocked door - damage from cold
-                cout << "\nEntras por la puerta abierta." << endl;
-                cout << "El pasaje está helado. El frío te cala los huesos." << endl;
-                cout << "No hay lugar seguro para descansar." << endl;
-                player.takeDamage(5);
-                cout << "Salud -5 por el frío." << endl;
-                break;
-            default:
-                cout << "Opcion invalida." << endl;
-                break;
+        Direction dir(corridorChoice);
+
+        if (dir.isValid()) {
+            cout << "\nVas hacia " << dir.getName() << "..." << endl;
+
+            switch (dir.getKey()) {
+                case 'W':
+                case 'w':
+                    // Arriba - find compass
+                    cout << "Encuentras una brujula en el suelo." << endl;
+                    player.pickUpCompass();
+                    cout << "¡Encontraste una Brujula!" << endl;
+                    break;
+                case 'S':
+                case 's':
+                    // Abajo - cold damage
+                    cout << "El pasaje está helado. El frío te cala los huesos." << endl;
+                    cout << "No hay lugar seguro para descansar." << endl;
+                    player.takeDamage(5);
+                    cout << "Salud -5 por el frío." << endl;
+                    break;
+                case 'D':
+                case 'd':
+                    // Derecha - locked door
+                    cout << "Encuentras una puerta cerrada con candado." << endl;
+                    cout << "¿Abrirán las nuevas puertas de la cámara?" << endl;
+                    cout << "Necesitas algo para abrirla..." << endl;
+                    break;
+                case 'A':
+                case 'a':
+                    // Izquierda - find lockpick
+                    cout << "Encuentras una ganzua oxidada en el suelo." << endl;
+                    player.pickUpLockpick();
+                    cout << "¡Encontraste una Ganzua oxidada!" << endl;
+                    break;
+            }
+        } else {
+            cout << "Direccion invalida." << endl;
         }
 
         player.displayStatus();
@@ -173,8 +208,8 @@ int main() {
         cout << "\nEscuchas un ruido detras de ti..." << endl;
         cout << "Decides descansar aqui." << endl;
     }
-    else if (choice == 2) {
-        cout << "\n¡Intentas ir al sur pero hay un muro!" << endl;
+    else if (entranceDir.isValid() && entranceDir.getKey() == 'S' || entranceDir.getKey() == 's') {
+        cout << "\n¡Intentas ir abajo pero hay un muro!" << endl;
         cout << "Te quedas en la Sala de Entrada." << endl;
     }
     else {
@@ -185,10 +220,15 @@ int main() {
     cout << "Puntos Finales: " << player.getScore() << endl;
     cout << "Salud Final: " << player.getHealth() << endl;
     cout << "Objetos: ";
-    if (player.hasKeyItem()) cout << "[Llave] ";
+    if (player.hasLockpickItem()) cout << "[Ganzua] ";
     if (player.hasCompassItem()) cout << "[Brujula] ";
-    if (!player.hasKeyItem() && !player.hasCompassItem()) cout << "Ninguno";
+    if (!player.hasLockpickItem() && !player.hasCompassItem()) cout << "No items";
     cout << endl;
+
+    // Pause so player can see results
+    cout << "\nPresiona Enter para salir...";
+    cin.ignore();
+    cin.get();
 
     return 0;
 }
