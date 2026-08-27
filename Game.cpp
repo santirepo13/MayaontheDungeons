@@ -5,119 +5,284 @@
 using std::cout;
 using std::cin;
 using std::endl;
+using std::string;
 
-Game::Game() : 
+Game::Game() :
     player("Profesora Carter"),
-    entrance("Sala de Entrada", "Una habitacion oscura con dos pasajes."),
-    corridor("Corredor Oscuro", "Un pasaje angosto. Escuchas goteo de agua.") {
+    entrance("Sala de Entrada", "Una construccion abandonada que parece extenderse en linea recta."),
+    corridor("Corredor de la Construccion", "El pasillo principal esta cubierto de polvo y restos de materiales."),
+    cavities("Cavidades Estrechas", "Espacios angostos entre las paredes de la construccion."),
+    rabbit("Conejo"),
+    gameRunning(true) {
+    corridor.addItem("Cajon");
+    corridor.addItem("Estante");
+    corridor.addItem("Puerta");
+    corridor.addItem("una ganzua oxidada");
+}
+
+bool Game::confirmQuit() {
+    char answer;
+
+    do {
+        cout << "¿Deseas salir del juego? (S/N): ";
+        cin >> answer;
+
+        if (answer == 'S' || answer == 's') {
+            return true;
+        }
+        else if (answer == 'N' || answer == 'n') {
+            return false;
+        }
+        else {
+            cout << "Respuesta invalida. Escribe S o N." << endl;
+        }
+    } while (true);
+}
+
+void Game::examine(Room& room, string objectName, string foundItem) {
+    if (!room.hasItem(objectName)) {
+        story.show(ACTION_FAILED, "Ese objeto no se encuentra aqui.");
+    }
+    else if (room.hasBeenExamined(objectName)) {
+        story.show(OBJECT_ALREADY_EXAMINED, objectName);
+    }
+    else if (foundItem == "") {
+        story.show(OBJECT_CLOSED, objectName);
+        room.markAsExamined(objectName);
+    }
+    else if (room.hasItem(foundItem)) {
+        story.show(OBJECT_EXAMINED, objectName);
+        player.pickUpLockpick();
+        room.removeItem(foundItem);
+        story.show(ITEM_FOUND, foundItem);
+        room.markAsExamined(objectName);
+    }
+    else {
+        story.show(NOTHING_FOUND, objectName);
+        room.markAsExamined(objectName);
+    }
+}
+
+void Game::leave(Room& currentPlace) {
+    story.show(LEAVING_PLACE, currentPlace.getName());
 }
 
 void Game::run() {
-    // Backstory
-    cout << "\n========================================" << endl;
-    cout << "  UNA PROFESORA DE GEOGRAFIA PERDIDA EN LAS MAZMORRAS" << endl;
-    cout << "========================================" << endl;
-    cout << "\nLa Profesora Maya Carter despierta en una mazmorra oscura..." << endl;
-    cout << "\n--- RETROSPECTIVA ---" << endl;
-    cout << "Maya Carter, de 42 anios, es profesora de geografia en la" << endl;
-    cout << "Secundaria Riverside. La semana pasada, llevo a sus alumnos" << endl;
-    cout << "a una excursion para estudiar formaciones de cuevas." << endl;
-    cout << "Durante la expedicion, resbalo y cayo en un pasaje oculto." << endl;
-    cout << "Desperto aqui, herida y sola, sin memoria de cuanto tiempo" << endl;
-    cout << "ha estado inconsciente." << endl;
-    cout << "\nSus heridas:" << endl;
-    cout << "  - Esguince del tobillo izquierdo" << endl;
-    cout << "  - Cortaduras y moretones en los brazos" << endl;
-    cout << "  - Un golpe en la cabeza" << endl;
-    cout << "\nDebe encontrar la salida antes de que sus alumnos" << endl;
-    cout << "y colegas dejen de buscarla." << endl;
-    cout << "========================================" << endl;
+    story.show(INTRODUCTION);
 
-    // Entrance Chamber
-    cout << "\n=== " << entrance.getName() << " ===" << endl;
-    cout << entrance.getDescription() << endl;
-    cout << "\nVes:" << endl;
-    cout << "  W - Arriba - Corredor Oscuro" << endl;
-    cout << "  S - Abajo - Muro (bloqueado)" << endl;
+    bool atEntrance = true;
 
-    char entranceChoice;
-    cout << "\nElección: ";
-    cin >> entranceChoice;
+    while (gameRunning && atEntrance) {
+        cout << "\n=== " << entrance.getName() << " ===" << endl;
+        cout << entrance.getDescription() << endl;
+        cout << "\nLista de movimientos:" << endl;
+        cout << "  W - Entrar al corredor de la construccion" << endl;
+        cout << "  Q - Salir del juego" << endl;
+        cout << "\nMovimiento: ";
 
-    Direction entranceDir(entranceChoice);
+        char entranceChoice;
+        cin >> entranceChoice;
 
-    if (entranceDir.isValid() && (entranceDir.getKey() == 'W' || entranceDir.getKey() == 'w')) {
-        cout << "\nEntras al Corredor Oscuro..." << endl;
+        if (entranceChoice == 'Q' || entranceChoice == 'q') {
+            if (confirmQuit()) {
+                gameRunning = false;
+            }
+            else {
+                cout << "El juego continua." << endl;
+            }
+        }
+        else if (entranceChoice == 'W' || entranceChoice == 'w') {
+            story.show(LOCATION_ENTERED, corridor.getName());
+            atEntrance = false;
+        }
+        else {
+            story.show(ACTION_FAILED, "Movimiento invalido. Maya permanece en la entrada.");
+        }
+    }
 
-        // Dark Corridor
+    bool chamberAccessible = true;
+
+    while (gameRunning && chamberAccessible) {
         cout << "\n=== " << corridor.getName() << " ===" << endl;
         cout << corridor.getDescription() << endl;
-
-        // Switch case for corridor choices (WASD)
-        cout << "\nVes cuatro caminos:" << endl;
-        cout << "  W - Arriba" << endl;
-        cout << "  S - Abajo" << endl;
-        cout << "  D - Derecha" << endl;
-        cout << "  A - Izquierda" << endl;
+        cout << "\nLista de movimientos:" << endl;
+        cout << "  W - Avanzar por la construccion" << endl;
+        cout << "  S - Entrar en las cavidades estrechas" << endl;
+        cout << "  D - Ir hacia la puerta" << endl;
+        cout << "  A - Ir hacia el cajon" << endl;
+        cout << "  Q - Salir del juego" << endl;
+        cout << "\nMovimiento: ";
 
         char corridorChoice;
-        cout << "\nElección: ";
         cin >> corridorChoice;
 
-        Direction dir(corridorChoice);
-
-        if (dir.isValid()) {
-            cout << "\nVas hacia " << dir.getName() << "..." << endl;
-
-            switch (dir.getKey()) {
-                case 'W':
-                case 'w':
-                    // Arriba - find compass
-                    cout << "Encuentras una brujula en el suelo." << endl;
-                    player.pickUpCompass();
-                    cout << "¡Encontraste una Brujula!" << endl;
-                    break;
-                case 'S':
-                case 's':
-                    // Abajo - cold damage
-                    cout << "El pasaje está helado. El frío te cala los huesos." << endl;
-                    cout << "No hay lugar seguro para descansar." << endl;
-                    player.takeDamage(5);
-                    cout << "Salud -5 por el frío." << endl;
-                    break;
-                case 'D':
-                case 'd':
-                    // Derecha - locked door
-                    cout << "Encuentras una puerta cerrada con candado." << endl;
-                    cout << "¿Abrirán las nuevas puertas de la cámara?" << endl;
-                    cout << "Necesitas algo para abrirla..." << endl;
-                    break;
-                case 'A':
-                case 'a':
-                    // Izquierda - find lockpick
-                    cout << "Encuentras una ganzua oxidada en el suelo." << endl;
-                    player.pickUpLockpick();
-                    cout << "¡Encontraste una Ganzua oxidada!" << endl;
-                    break;
+        if (corridorChoice == 'Q' || corridorChoice == 'q') {
+            if (confirmQuit()) {
+                gameRunning = false;
             }
-        } else {
-            cout << "Direccion invalida." << endl;
+            else {
+                cout << "El juego continua." << endl;
+            }
+            continue;
         }
 
-        player.displayStatus();
+        Direction direction(corridorChoice);
 
-        cout << "\nEscuchas un ruido detras de ti..." << endl;
-        cout << "Decides descansar aqui." << endl;
-    }
-    else if (entranceDir.isValid() && (entranceDir.getKey() == 'S' || entranceDir.getKey() == 's')) {
-        cout << "\n¡Intentas ir abajo pero hay un muro!" << endl;
-        cout << "Te quedas en la Sala de Entrada." << endl;
-    }
-    else {
-        cout << "\nOpcion invalida. Dudas y te quedas donde estas." << endl;
+        if (!direction.isValid()) {
+            story.show(ACTION_FAILED, "Direccion invalida.");
+        }
+        else {
+            switch (direction.getKey()) {
+            case 'W':
+            case 'w':
+                if (!player.hasCompassItem()) {
+                    story.show(ITEM_FOUND, "una brujula");
+                    player.pickUpCompass();
+                }
+                else {
+                    story.show(NOTHING_FOUND, "el camino superior");
+                }
+                break;
+
+            case 'S':
+            case 's': {
+                story.show(LOCATION_ENTERED, cavities.getName());
+                player.takeDamage(5);
+                story.show(DAMAGE_RECEIVED, "5");
+
+                bool insideCavities = true;
+
+                while (gameRunning && insideCavities) {
+                    cout << "\n=== " << cavities.getName() << " ===" << endl;
+                    cout << cavities.getDescription() << endl;
+                    cout << "\nLista de movimientos:" << endl;
+                    cout << "  S - Continuar a traves de las cavidades" << endl;
+                    cout << "  Q - Salir del juego" << endl;
+                    cout << "\nMovimiento: ";
+
+                    char cavityChoice;
+                    cin >> cavityChoice;
+
+                    if (cavityChoice == 'Q' || cavityChoice == 'q') {
+                        if (confirmQuit()) {
+                            gameRunning = false;
+                        }
+                        else {
+                            cout << "El juego continua." << endl;
+                        }
+                    }
+                    else if (cavityChoice == 'S' || cavityChoice == 's') {
+                        leave(cavities);
+                        story.show(CHARACTER_FOUND, rabbit.getName());
+                        insideCavities = false;
+                        chamberAccessible = false;
+                    }
+                    else {
+                        story.show(ACTION_FAILED, "Movimiento invalido. Las cavidades solo permiten avanzar.");
+                    }
+                }
+                break;
+            }
+
+            case 'D':
+            case 'd':
+                story.show(OBJECT_LOCKED, "una puerta");
+                break;
+
+            case 'A':
+            case 'a': {
+                bool inDrawerArea = true;
+
+                while (gameRunning && inDrawerArea) {
+                    cout << "\n=== Objetos del corredor ===" << endl;
+                    cout << "  E - Examinar el cajon" << endl;
+                    cout << "  A - Continuar hacia el estante" << endl;
+                    cout << "  S - Regresar al corredor" << endl;
+                    cout << "  Q - Salir del juego" << endl;
+                    cout << "\nMovimiento: ";
+
+                    char drawerChoice;
+                    cin >> drawerChoice;
+
+                    if (drawerChoice == 'Q' || drawerChoice == 'q') {
+                        if (confirmQuit()) {
+                            gameRunning = false;
+                        }
+                        else {
+                            cout << "El juego continua." << endl;
+                        }
+                    }
+                    else if (drawerChoice == 'E' || drawerChoice == 'e') {
+                        examine(corridor, "Cajon", "");
+                    }
+                    else if (drawerChoice == 'A' || drawerChoice == 'a') {
+                        bool atShelf = true;
+
+                        while (gameRunning && atShelf) {
+                            cout << "\n=== Objetos del corredor ===" << endl;
+                            cout << "  E - Examinar el estante" << endl;
+                            cout << "  S - Regresar al cajon" << endl;
+                            cout << "  Q - Salir del juego" << endl;
+                            cout << "\nMovimiento: ";
+
+                            char shelfChoice;
+                            cin >> shelfChoice;
+
+                            if (shelfChoice == 'Q' || shelfChoice == 'q') {
+                                if (confirmQuit()) {
+                                    gameRunning = false;
+                                }
+                                else {
+                                    cout << "El juego continua." << endl;
+                                }
+                            }
+                            else if (shelfChoice == 'E' || shelfChoice == 'e') {
+                                examine(corridor, "Estante", "una ganzua oxidada");
+                            }
+                            else if (shelfChoice == 'S' || shelfChoice == 's') {
+                                atShelf = false;
+                            }
+                            else {
+                                story.show(ACTION_FAILED, "Movimiento invalido.");
+                            }
+                        }
+                    }
+                    else if (drawerChoice == 'S' || drawerChoice == 's') {
+                        inDrawerArea = false;
+                    }
+                    else {
+                        story.show(ACTION_FAILED, "Movimiento invalido.");
+                    }
+                }
+                break;
+            }
+        }
+        }
     }
 
-    cout << "\n=== FIN DEL CAPITULO 1 ===" << endl;
+    while (gameRunning && !chamberAccessible) {
+        cout << "\n=== Despues de la salida ===" << endl;
+        cout << "\nLista de movimientos:" << endl;
+        cout << "  Q - Salir del juego" << endl;
+        cout << "\nMovimiento: ";
+
+        char outsideChoice;
+        cin >> outsideChoice;
+
+        if (outsideChoice == 'Q' || outsideChoice == 'q') {
+            if (confirmQuit()) {
+                gameRunning = false;
+            }
+            else {
+                cout << "El juego continua." << endl;
+            }
+        }
+        else {
+            story.show(ACTION_FAILED, "Ese movimiento todavia no esta disponible.");
+        }
+    }
+
+    story.show(ENDING);
     cout << "Puntos Finales: " << player.getScore() << endl;
     cout << "Salud Final: " << player.getHealth() << endl;
     cout << "Objetos: ";
@@ -126,7 +291,6 @@ void Game::run() {
     if (!player.hasLockpickItem() && !player.hasCompassItem()) cout << "No items";
     cout << endl;
 
-    // Pause so player can see results
     cout << "\nPresiona Enter para salir...";
     cin.ignore();
     cin.get();
