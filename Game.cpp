@@ -1,117 +1,18 @@
+#include "Game.h"
+#include "Direction.h"
 #include <iostream>
-#include <string>
 
 using std::cout;
 using std::cin;
 using std::endl;
-using std::string;
 
-class Direction {
-private:
-    char directionKey;
-    string directionName;
+Game::Game() : 
+    player("Profesora Carter"),
+    entrance("Sala de Entrada", "Una habitacion oscura con dos pasajes."),
+    corridor("Corredor Oscuro", "Un pasaje angosto. Escuchas goteo de agua.") {
+}
 
-public:
-    Direction(char key) {
-        directionKey = key;
-        if (key == 'W' || key == 'w') {
-            directionName = "Arriba";
-        }
-        else if (key == 'S' || key == 's') {
-            directionName = "Abajo";
-        }
-        else if (key == 'A' || key == 'a') {
-            directionName = "Izquierda";
-        }
-        else if (key == 'D' || key == 'd') {
-            directionName = "Derecha";
-        }
-        else {
-            directionName = "Invalida";
-        }
-    }
-
-    char getKey() { return directionKey; }
-    string getName() { return directionName; }
-    bool isValid() { return directionName != "Invalida"; }
-};
-
-class Player {
-private:
-    string playerName;
-    int playerHealth;
-    bool playerHasLockpick;
-    bool playerHasCompass;
-    int playerScore;
-
-public:
-    Player(string name) {
-        playerName = name;
-        playerHealth = 73;
-        playerHasLockpick = false;
-        playerHasCompass = false;
-        playerScore = 0;
-    }
-
-    string getName() { return playerName; }
-    int getHealth() { return playerHealth; }
-    bool hasLockpickItem() { return playerHasLockpick; }
-    bool hasCompassItem() { return playerHasCompass; }
-    int getScore() { return playerScore; }
-
-    void setHealth(int newHealth) { playerHealth = newHealth; }
-    void heal(int amount) { playerHealth = playerHealth + amount; }
-    void takeDamage(int damage) { playerHealth = playerHealth - damage; }
-    void addScore(int points) { playerScore = playerScore + points; }
-    void pickUpLockpick() {
-        playerHasLockpick = true;
-        playerScore = playerScore + 1;
-    }
-    void pickUpCompass() {
-        playerHasCompass = true;
-    }
-
-    void displayStatus() {
-        cout << "\n--- " << playerName << " ---" << endl;
-        cout << "Salud: " << playerHealth << endl;
-        cout << "Puntos: " << playerScore << endl;
-        cout << "Objetos: ";
-        if (playerHasLockpick) cout << "[Ganzua] ";
-        if (playerHasCompass) cout << "[Brujula] ";
-        if (!playerHasLockpick && !playerHasCompass) cout << "Ninguno";
-        cout << endl;
-    }
-};
-
-class Room {
-private:
-    string roomName;
-    string roomDescription;
-    bool roomHasItem;
-    string roomItemName;
-
-public:
-    Room(string name, string description) {
-        roomName = name;
-        roomDescription = description;
-        roomHasItem = false;
-        roomItemName = "";
-    }
-
-    string getName() { return roomName; }
-    string getDescription() { return roomDescription; }
-    bool hasItem() { return roomHasItem; }
-    string getItemName() { return roomItemName; }
-
-    void setItem(string itemName) { roomHasItem = true; roomItemName = itemName; }
-    void removeItem() { roomHasItem = false; roomItemName = ""; }
-};
-
-int main() {
-    Player player("Profesora Carter");
-    Room entrance("Sala de Entrada", "Una habitacion oscura con dos pasajes.");
-    Room corridor("Corredor Oscuro", "Un pasaje angosto. Escuchas goteo de agua.");
-
+void Game::run() {
     // Backstory
     cout << "\n========================================" << endl;
     cout << "  UNA PROFESORA DE GEOGRAFIA PERDIDA EN LAS MAZMORRAS" << endl;
@@ -145,7 +46,7 @@ int main() {
 
     Direction entranceDir(entranceChoice);
 
-    if (entranceDir.isValid() && entranceDir.getKey() == 'W' || entranceDir.getKey() == 'w') {
+    if (entranceDir.isValid() && (entranceDir.getKey() == 'W' || entranceDir.getKey() == 'w')) {
         cout << "\nEntras al Corredor Oscuro..." << endl;
 
         // Dark Corridor
@@ -208,7 +109,7 @@ int main() {
         cout << "\nEscuchas un ruido detras de ti..." << endl;
         cout << "Decides descansar aqui." << endl;
     }
-    else if (entranceDir.isValid() && entranceDir.getKey() == 'S' || entranceDir.getKey() == 's') {
+    else if (entranceDir.isValid() && (entranceDir.getKey() == 'S' || entranceDir.getKey() == 's')) {
         cout << "\n¡Intentas ir abajo pero hay un muro!" << endl;
         cout << "Te quedas en la Sala de Entrada." << endl;
     }
@@ -229,6 +130,4 @@ int main() {
     cout << "\nPresiona Enter para salir...";
     cin.ignore();
     cin.get();
-
-    return 0;
 }
