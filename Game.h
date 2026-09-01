@@ -7,6 +7,11 @@
 
 using std::string;
 
+enum ItemReward {
+    NO_REWARD,
+    LOCKPICK_REWARD
+};
+
 class Game {
 private:
     Player player;
@@ -17,7 +22,7 @@ private:
     Rabbit rabbit;
     bool gameRunning;
 
-    void examine(Room& room, string objectName, string foundItem);
+    void examine(Room& room, string objectName, string foundItem, ItemReward reward);
     void leave(Room& currentPlace);
     bool confirmQuit();
 

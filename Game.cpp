@@ -39,7 +39,7 @@ bool Game::confirmQuit() {
     } while (true);
 }
 
-void Game::examine(Room& room, string objectName, string foundItem) {
+void Game::examine(Room& room, string objectName, string foundItem, ItemReward reward) {
     if (!room.hasItem(objectName)) {
         story.show(ACTION_FAILED, "Ese objeto no se encuentra aqui.");
     }
@@ -52,9 +52,15 @@ void Game::examine(Room& room, string objectName, string foundItem) {
     }
     else if (room.hasItem(foundItem)) {
         story.show(OBJECT_EXAMINED, objectName);
-        player.pickUpLockpick();
-        room.removeItem(foundItem);
         story.show(ITEM_FOUND, foundItem);
+
+        if (reward == LOCKPICK_REWARD) {
+            player.pickUpLockpick();
+        }
+
+        room.removeItem(foundItem);
+
+        story.show(ITEM_COLLECTED, foundItem);
         room.markAsExamined(objectName);
     }
     else {
@@ -88,7 +94,7 @@ void Game::run() {
                 gameRunning = false;
             }
             else {
-                cout << "El juego continua." << endl;
+                story.show(GAME_CONTINUED);
             }
         }
         else if (entranceChoice == 'W' || entranceChoice == 'w') {
@@ -121,7 +127,7 @@ void Game::run() {
                 gameRunning = false;
             }
             else {
-                cout << "El juego continua." << endl;
+                story.show(GAME_CONTINUED);
             }
             continue;
         }
@@ -138,6 +144,7 @@ void Game::run() {
                 if (!player.hasCompassItem()) {
                     story.show(ITEM_FOUND, "una brujula");
                     player.pickUpCompass();
+                    story.show(ITEM_COLLECTED, "una brujula");
                 }
                 else {
                     story.show(NOTHING_FOUND, "el camino superior");
@@ -147,6 +154,7 @@ void Game::run() {
             case 'S':
             case 's': {
                 story.show(LOCATION_ENTERED, cavities.getName());
+                story.show(CAVITIES_ENTERED);
                 player.takeDamage(5);
                 story.show(DAMAGE_RECEIVED, "5");
 
@@ -168,12 +176,14 @@ void Game::run() {
                             gameRunning = false;
                         }
                         else {
-                            cout << "El juego continua." << endl;
+                            story.show(GAME_CONTINUED);
                         }
                     }
                     else if (cavityChoice == 'S' || cavityChoice == 's') {
+                        story.show(CAVITIES_EXITED);
                         leave(cavities);
                         story.show(CHARACTER_FOUND, rabbit.getName());
+                        story.show(RABBIT_INJURED);
                         insideCavities = false;
                         chamberAccessible = false;
                     }
@@ -186,15 +196,16 @@ void Game::run() {
 
             case 'D':
             case 'd':
-                story.show(OBJECT_LOCKED, "una puerta");
+                story.show(OBJECT_LOCKED, "la puerta");
                 break;
 
             case 'A':
             case 'a': {
+                story.show(DRAWER_AREA_ENTERED);
                 bool inDrawerArea = true;
 
                 while (gameRunning && inDrawerArea) {
-                    cout << "\n=== Objetos del corredor ===" << endl;
+                    cout << "\n=== Zona del cajon ===" << endl;
                     cout << "  E - Examinar el cajon" << endl;
                     cout << "  A - Continuar hacia el estante" << endl;
                     cout << "  S - Regresar al corredor" << endl;
@@ -209,17 +220,18 @@ void Game::run() {
                             gameRunning = false;
                         }
                         else {
-                            cout << "El juego continua." << endl;
+                            story.show(GAME_CONTINUED);
                         }
                     }
                     else if (drawerChoice == 'E' || drawerChoice == 'e') {
-                        examine(corridor, "Cajon", "");
+                        examine(corridor, "Cajon", "", NO_REWARD);
                     }
                     else if (drawerChoice == 'A' || drawerChoice == 'a') {
+                        story.show(SHELF_AREA_ENTERED);
                         bool atShelf = true;
 
                         while (gameRunning && atShelf) {
-                            cout << "\n=== Objetos del corredor ===" << endl;
+                            cout << "\n=== Zona del estante ===" << endl;
                             cout << "  E - Examinar el estante" << endl;
                             cout << "  S - Regresar al cajon" << endl;
                             cout << "  Q - Salir del juego" << endl;
@@ -233,13 +245,14 @@ void Game::run() {
                                     gameRunning = false;
                                 }
                                 else {
-                                    cout << "El juego continua." << endl;
+                                    story.show(GAME_CONTINUED);
                                 }
                             }
                             else if (shelfChoice == 'E' || shelfChoice == 'e') {
-                                examine(corridor, "Estante", "una ganzua oxidada");
+                                examine(corridor, "Estante", "una ganzua oxidada", LOCKPICK_REWARD);
                             }
                             else if (shelfChoice == 'S' || shelfChoice == 's') {
+                                story.show(DRAWER_AREA_RETURNED);
                                 atShelf = false;
                             }
                             else {
@@ -248,6 +261,7 @@ void Game::run() {
                         }
                     }
                     else if (drawerChoice == 'S' || drawerChoice == 's') {
+                        story.show(CORRIDOR_RETURNED);
                         inDrawerArea = false;
                     }
                     else {
@@ -274,11 +288,11 @@ void Game::run() {
                 gameRunning = false;
             }
             else {
-                cout << "El juego continua." << endl;
+                story.show(GAME_CONTINUED);
             }
         }
         else {
-            story.show(ACTION_FAILED, "Ese movimiento todavia no esta disponible.");
+            story.show(MOVEMENT_UNAVAILABLE);
         }
     }
 
@@ -288,7 +302,7 @@ void Game::run() {
     cout << "Objetos: ";
     if (player.hasLockpickItem()) cout << "[Ganzua] ";
     if (player.hasCompassItem()) cout << "[Brujula] ";
-    if (!player.hasLockpickItem() && !player.hasCompassItem()) cout << "No items";
+    if (!player.hasLockpickItem() && !player.hasCompassItem()) cout << "Ninguno";
     cout << endl;
 
     cout << "\nPresiona Enter para salir...";
